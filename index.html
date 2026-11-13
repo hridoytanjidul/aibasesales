@@ -598,7 +598,7 @@
         </button>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        This app works out-of-the-box using its built-in Sales Intelligence Engine. To enable live generative responses powered by <strong>Gemini 2.5 Flash</strong>, paste your API key below:
+        The built-in Sales Intelligence Engine works without a key. An optional Gemini key is kept only for this browser session and sent directly from your browser to Google. Do not enter a key you cannot safely use in this browser.
       </p>
       <input id="gemini-api-key" type="password" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500" />
       <div class="flex justify-end gap-2">
@@ -675,7 +675,76 @@
       }
     ];
 
-    // Navigation Switcher
+    function updateDashboardKPIs() {
+      const totalValue = leadsCRM.reduce((acc, item) => acc + Number(item.budget || 0), 0);
+      const hotCount = leadsCRM.filter(l => l.tier === 'Hot').length;
+      document.getElementById('kpi-pipeline').textContent = formatCurrency(totalValue);
+      document.getElementById('kpi-hot-leads').textContent = String(hotCount);
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(Number(value) || 0);
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[character]);
+    }
+
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      const icon = toast.querySelector('[data-lucide]');
+      document.getElementById('toast-msg').textContent = message;
+      if (icon) {
+        icon.dataset.lucide = isError ? 'alert-circle' : 'check-circle';
+        icon.classList.toggle('text-emerald-400', !isError);
+        icon.classList.toggle('text-red-400', isError);
+        lucide.createIcons();
+      }
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      window.clearTimeout(showToast.timeoutId);
+      showToast.timeoutId = window.setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 2800);
+    }
+
+    function persistCRM() {
+      try {
+        localStorage.setItem('nexusai-leads', JSON.stringify(leadsCRM));
+        return true;
+      } catch (error) {
+        console.error('Could not save the CRM to this browser.', error);
+        showToast('Could not save CRM data in this browser.', true);
+        return false;
+      }
+    }
+
+    function loadCRM() {
+      try {
+        const saved = localStorage.getItem('nexusai-leads');
+        if (!saved) return;
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed)) throw new Error('Saved CRM data is not a list.');
+        leadsCRM = parsed.filter(lead =>
+          lead && typeof lead.company === 'string' && typeof lead.contact === 'string'
+        );
+      } catch (error) {
+        console.error('Could not load saved CRM data.', error);
+        showToast('Saved CRM data could not be loaded; showing demo leads.', true);
+      }
+    }
+
     function switchTab(tabId) {
       const tabs = ['dashboard', 'inbound', 'outbound', 'objections', 'crm'];
       const titles = {
@@ -685,39 +754,420 @@
         objections: ['AI Objection Battlecards', 'Turn price, timing, and competitor pushbacks into closed deals'],
         crm: ['Sales Pipeline CRM', 'Track, filter, and export qualified opportunities']
       };
+      if (!tabs.includes(tabId)) return;
 
-      tabs.forEach(t => {
-        document.getElementById('tab-' + t).classList.add('hidden');
-        const dNav = document.getElementById('nav-' + t);
-        if (dNav) {
-          dNav.classList.remove('active-nav');
-          dNav.classList.add('text-slate-400');
+      tabs.forEach(tab => {
+        document.getElementById('tab-' + tab).classList.toggle('hidden', tab !== tabId);
+        const desktopNav = document.getElementById('nav-' + tab);
+        if (desktopNav) {
+          desktopNav.classList.toggle('active-nav', tab === tabId);
+          desktopNav.classList.toggle('text-slate-400', tab !== tabId);
         }
-        const mNav = document.getElementById('mnav-' + t);
-        if (mNav) {
-          mNav.classList.remove('active-mobile-nav');
-        }
+        const mobileNav = document.getElementById('mnav-' + tab);
+        if (mobileNav) mobileNav.classList.toggle('active-mobile-nav', tab === tabId);
       });
-
-      document.getElementById('tab-' + tabId).classList.remove('hidden');
-      const activeDesktop = document.getElementById('nav-' + tabId);
-      if (activeDesktop) {
-        activeDesktop.classList.add('active-nav');
-        activeDesktop.classList.remove('text-slate-400');
-      }
-      const activeMobile = document.getElementById('mnav-' + tabId);
-      if (activeMobile) {
-        activeMobile.classList.add('active-mobile-nav');
-      }
 
       document.getElementById('page-title').textContent = titles[tabId][0];
       document.getElementById('page-subtitle').textContent = titles[tabId][1];
-
       if (tabId === 'crm') renderCRMTable();
-      updateDashboardKPIs();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function updateDashboardKPIs() {
-      const totalValue = leadsCRM.reduce((acc, item) => acc + Number(item.budget || 0), 0);
-      const hotCount = leadsCRM.filter(l => l.tier === 'Hot').length;
-      document.
+    function fillSampleInbound() {
+      document.getElementById('in-name').value = 'Ariful Islam (Head of Growth)';
+      document.getElementById('in-company').value = 'ShopSphere BD';
+      document.getElementById('in-budget').value = '10500';
+      document.getElementById('in-industry').value = 'E-Commerce & Retail';
+      document.getElementById('in-source').value = 'Website Demo Request';
+      document.getElementById('in-message').value = 'We receive 400+ daily inquiries on WhatsApp and web forms, and slow responses are hurting our sales conversion.';
+      showToast('Demo lead loaded.');
+    }
+
+    function fillSampleOutbound() {
+      document.getElementById('out-contact').value = 'Mahmudul Hasan, Director of Sales';
+      document.getElementById('out-company').value = 'PrimeTech Solutions';
+      document.getElementById('out-industry').value = 'B2B SaaS & IT';
+      document.getElementById('out-pain').value = 'Low reply rates and manual lead qualification';
+      document.getElementById('out-value').value = 'AI-powered sales automation that helps teams respond faster and qualify more opportunities';
+      document.getElementById('out-tone').value = 'Consultative & ROI-Focused';
+      showToast('Sample target loaded.');
+    }
+
+    function getFirstName(fullName) {
+      return fullName.trim().split(/\s+/)[0] || 'there';
+    }
+
+    function getTier(score) {
+      return score >= 80 ? 'Hot' : score >= 55 ? 'Warm' : 'Cold';
+    }
+
+    async function generateGeminiText(prompt) {
+      if (!geminiApiKey) return null;
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(geminiApiKey),
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.6, maxOutputTokens: 900 }
+          })
+        }
+      );
+      if (!response.ok) {
+        const details = await response.text();
+        throw new Error('Gemini request failed (' + response.status + '): ' + details.slice(0, 250));
+      }
+      const result = await response.json();
+      const text = result.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+      if (!text) throw new Error('Gemini returned an empty response.');
+      return text;
+    }
+
+    async function analyzeInboundLead() {
+      const name = document.getElementById('in-name').value.trim();
+      const company = document.getElementById('in-company').value.trim();
+      const budget = Number(document.getElementById('in-budget').value);
+      const industry = document.getElementById('in-industry').value;
+      const source = document.getElementById('in-source').value;
+      const message = document.getElementById('in-message').value.trim();
+      if (!name || !company || !message || !Number.isFinite(budget) || budget < 0) {
+        showToast('Enter a name, company, valid budget, and inquiry first.', true);
+        return;
+      }
+
+      const button = document.getElementById('btn-analyze-inbound');
+      button.disabled = true;
+      try {
+        const keywords = ['conversion', 'urgent', 'automate', 'automation', 'scale', 'demo', 'budget', 'sales', 'today', 'respond'];
+        const keywordScore = Math.min(keywords.filter(word => message.toLowerCase().includes(word)).length * 5, 25);
+        const budgetScore = budget >= 10000 ? 35 : budget >= 5000 ? 25 : budget >= 1000 ? 15 : 8;
+        const sourceScore = ['Website Demo Request', 'Customer Referral', 'WhatsApp / Live Chat'].includes(source) ? 15 : 8;
+        const score = Math.min(99, 25 + budgetScore + keywordScore + sourceScore);
+        const tier = getTier(score);
+        const urgency = /urgent|asap|immediately|today|this week/i.test(message) ? 'High' :
+          /month|quarter|later|exploring/i.test(message) ? 'Low' : 'Medium';
+        const sentiment = /frustrat|slow|problem|hurting|missed|losing/i.test(message) ? 'Concerned' :
+          /interested|excited|great|looking forward/i.test(message) ? 'Positive' : 'Neutral';
+        const strategy = tier === 'Hot'
+          ? 'Prioritize a same-day response and schedule a tailored ROI walkthrough.'
+          : tier === 'Warm'
+            ? 'Send a relevant case study and follow up with a discovery call within two business days.'
+            : 'Start a helpful nurture sequence and qualify timing, needs, and budget.';
+        const fallbackReply = `Subject: Helping ${company} respond to leads faster\n\nHi ${getFirstName(name)},\n\nThanks for reaching out about ${industry.toLowerCase()}. I understand that ${message.slice(0, 140)}${message.length > 140 ? '…' : ''}\n\nWe can help your team qualify inquiries and follow up more consistently. Would you be open to a short call to see whether it fits your workflow?\n\nBest,\nSales Team`;
+        let reply = fallbackReply;
+        if (geminiApiKey) {
+          try {
+            reply = await generateGeminiText(
+              `Write a concise, helpful sales reply to ${name} at ${company}. Channel: ${source}. Industry: ${industry}. Budget: $${budget}. Inquiry: ${message}. Do not make unsupported performance promises. Include a subject line, greeting, and one clear next step.`
+            ) || fallbackReply;
+          } catch (error) {
+            console.error(error);
+            showToast('Gemini failed; a built-in draft was generated instead.', true);
+          }
+        }
+
+        document.getElementById('inbound-score').textContent = score + ' / 100';
+        document.getElementById('inbound-sentiment').textContent = sentiment;
+        document.getElementById('inbound-urgency').textContent = urgency;
+        document.getElementById('inbound-strategy').textContent = strategy;
+        document.getElementById('inbound-reply').value = reply;
+        const badge = document.getElementById('inbound-tier-badge');
+        badge.textContent = tier + ' Priority';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold ' +
+          (tier === 'Hot' ? 'bg-red-500/15 text-red-300' : tier === 'Warm' ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-800 text-slate-300');
+        lastAnalyzedLead = {
+          company, contact: name, industry, source, budget, score, tier, action: strategy
+        };
+        document.getElementById('btn-save-crm').disabled = false;
+        showToast('Lead scored and reply drafted.');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function saveCurrentLeadToCRM() {
+      if (!lastAnalyzedLead) {
+        showToast('Score a lead before adding it to the CRM.', true);
+        return;
+      }
+      const exists = leadsCRM.some(lead =>
+        lead.company.toLowerCase() === lastAnalyzedLead.company.toLowerCase() &&
+        lead.contact.toLowerCase() === lastAnalyzedLead.contact.toLowerCase()
+      );
+      if (exists) {
+        showToast('This contact is already in the CRM.', true);
+        return;
+      }
+      leadsCRM.unshift({ ...lastAnalyzedLead });
+      if (!persistCRM()) {
+        leadsCRM.shift();
+        return;
+      }
+      updateDashboardKPIs();
+      renderCRMTable();
+      showToast(lastAnalyzedLead.company + ' added to the CRM.');
+    }
+
+    async function generateOutboundSequence() {
+      const contact = document.getElementById('out-contact').value.trim();
+      const company = document.getElementById('out-company').value.trim();
+      const industry = document.getElementById('out-industry').value.trim();
+      const pain = document.getElementById('out-pain').value.trim();
+      const value = document.getElementById('out-value').value.trim();
+      const tone = document.getElementById('out-tone').value;
+      if (!contact || !company || !industry || !pain || !value) {
+        showToast('Complete the contact, company, industry, pain point, and value proposition.', true);
+        return;
+      }
+      const firstName = getFirstName(contact);
+      const button = document.getElementById('btn-generate-outbound');
+      button.disabled = true;
+      try {
+        let email = `Subject: A practical way to improve ${company}'s sales follow-up\n\nHi ${firstName},\n\nI noticed ${company} works in ${industry}. Teams facing ${pain.toLowerCase()} often find that timely, consistent follow-up makes a real difference.\n\n${value}. Would a brief conversation next week be useful to see whether this could fit your process?\n\nBest,\nSales Team`;
+        let dm = `Hi ${firstName} — I’m reaching out because teams in ${industry} are working through ${pain.toLowerCase()}. ${value}. Is improving this a priority for ${company} right now?`;
+        let call = `Hi ${firstName}, this is the Sales Team. I’ll be brief — I’m calling because ${company} may be looking at ${pain.toLowerCase()}. We help teams with ${value.toLowerCase()}. Is this something you’re exploring, or have I caught you at a bad time?`;
+        if (geminiApiKey) {
+          try {
+            const generated = await generateGeminiText(
+              `Create three concise outbound messages for ${firstName} at ${company} (${industry}). Pain point: ${pain}. Offer: ${value}. Tone: ${tone}. Return exactly three sections labeled EMAIL:, DIRECT MESSAGE:, and CALL OPENER:. Keep claims cautious and specific; do not invent facts.`
+            );
+            const sections = generated?.match(/EMAIL:\s*([\s\S]*?)DIRECT MESSAGE:\s*([\s\S]*?)CALL OPENER:\s*([\s\S]*)/i);
+            if (sections) [, email, dm, call] = sections;
+          } catch (error) {
+            console.error(error);
+            showToast('Gemini failed; built-in campaign drafts were generated instead.', true);
+          }
+        }
+        document.getElementById('out-email').value = email.trim();
+        document.getElementById('out-dm').value = dm.trim();
+        document.getElementById('out-call').value = call.trim();
+        showToast('Three personalized outreach drafts generated.');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    const objectionPresets = {
+      price: 'Your solution is too expensive for our budget.',
+      timing: 'Call me next quarter; we are too busy right now.',
+      competitor: 'We already use a competitor for this.',
+      authority: 'I need approval from my manager before deciding.'
+    };
+
+    function loadObjectionPreset(type) {
+      if (!objectionPresets[type]) return;
+      document.getElementById('obj-input').value = objectionPresets[type];
+      generateObjectionRebuttal();
+    }
+
+    async function generateObjectionRebuttal() {
+      const objection = document.getElementById('obj-input').value.trim();
+      if (!objection) {
+        showToast('Enter or select a customer objection first.', true);
+        return;
+      }
+      const lower = objection.toLowerCase();
+      let pivot;
+      let roi;
+      let close;
+      if (/expensive|price|budget|cost/i.test(lower)) {
+        pivot = 'That makes sense—budget matters, and you need to be confident the investment is justified. Could I ask what outcomes you would need to see for this to feel worthwhile?';
+        roi = 'Let’s compare the cost with the time spent on manual follow-up and the value of opportunities that currently go unanswered. We can use your actual numbers rather than assume a return.';
+        close = 'Would a small, time-boxed pilot with agreed success measures help you evaluate the value before making a broader commitment?';
+      } else if (/quarter|timing|busy|later|not now/i.test(lower)) {
+        pivot = 'I understand—the timing may not be right. What is changing next quarter that would make this more relevant?';
+        roi = 'If useful, we can estimate how much follow-up time is being spent today and revisit the opportunity when your planning window opens.';
+        close = 'Would it be helpful if I sent a concise summary now and followed up on a date you choose?';
+      } else if (/competitor|already use|using .* crm|another provider/i.test(lower)) {
+        pivot = 'That makes sense. If your current setup is working well, there may be no reason to replace it. What is it doing particularly well for your team?';
+        roi = 'A fair comparison would focus on any gaps in response time, qualification, or workflow—not on replacing tools that already serve you.';
+        close = 'Would a short gap analysis be useful? We can keep your current system in place and only explore areas where you want improvement.';
+      } else if (/approval|boss|manager|decision|sign.?off/i.test(lower)) {
+        pivot = 'Of course—bringing the right people into the decision is important. What will your manager need to understand to evaluate this?';
+        roi = 'I can prepare a brief summary of the problem, options, estimated costs, and measurable success criteria for your internal discussion.';
+        close = 'Would you prefer a short briefing you can share, or should we schedule a conversation with both of you?';
+      } else {
+        pivot = `Thanks for being candid. I hear your concern: “${objection}”`;
+        roi = 'Let’s clarify what impact this concern has on your decision and what evidence or information would help address it.';
+        close = 'What would be a practical next step that lets you evaluate the fit without overcommitting?';
+      }
+      if (geminiApiKey) {
+        try {
+          const generated = await generateGeminiText(
+            `A prospect said: "${objection}". Write three brief, respectful responses labeled EMPATHETIC PIVOT:, VALUE FRAME:, and NEXT STEP:. Avoid pressure, fabricated statistics, or unsupported claims.`
+          );
+          const sections = generated?.match(/EMPATHETIC PIVOT:\s*([\s\S]*?)VALUE FRAME:\s*([\s\S]*?)NEXT STEP:\s*([\s\S]*)/i);
+          if (sections) [, pivot, roi, close] = sections;
+        } catch (error) {
+          console.error(error);
+          showToast('Gemini failed; a built-in battlecard was generated instead.', true);
+        }
+      }
+      document.getElementById('obj-card-1').textContent = pivot.trim();
+      document.getElementById('obj-card-2').textContent = roi.trim();
+      document.getElementById('obj-card-3').textContent = close.trim();
+      showToast('Objection battlecard generated.');
+    }
+
+    async function copyText(elementId) {
+      const element = document.getElementById(elementId);
+      const text = element?.value ?? element?.textContent ?? '';
+      if (!text.trim()) {
+        showToast('There is no generated text to copy yet.', true);
+        return;
+      }
+      await copyToClipboard(text);
+    }
+
+    async function copyTextFromElement(elementId) {
+      const text = document.getElementById(elementId)?.textContent?.trim();
+      if (!text) {
+        showToast('There is no text to copy yet.', true);
+        return;
+      }
+      await copyToClipboard(text);
+    }
+
+    async function copyToClipboard(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const helper = document.createElement('textarea');
+          helper.value = text;
+          helper.setAttribute('readonly', '');
+          helper.style.position = 'fixed';
+          helper.style.opacity = '0';
+          document.body.appendChild(helper);
+          helper.select();
+          const copied = document.execCommand('copy');
+          helper.remove();
+          if (!copied) throw new Error('Clipboard access was denied.');
+        }
+        showToast('Copied to clipboard.');
+      } catch (error) {
+        console.error('Could not copy text.', error);
+        showToast('Copy failed. Select and copy the text manually.', true);
+      }
+    }
+
+    function renderCRMTable() {
+      const body = document.getElementById('crm-table-body');
+      const filter = document.getElementById('crm-filter').value;
+      const visibleLeads = leadsCRM.filter(lead => filter === 'ALL' || lead.tier === filter);
+      if (!visibleLeads.length) {
+        body.innerHTML = '<tr><td colspan="6" class="py-8 px-4 text-center text-slate-400">No leads match this filter.</td></tr>';
+        return;
+      }
+      body.innerHTML = visibleLeads.map(lead => {
+        const tierClass = lead.tier === 'Hot' ? 'text-red-300 bg-red-500/10' :
+          lead.tier === 'Warm' ? 'text-amber-300 bg-amber-500/10' : 'text-slate-300 bg-slate-700/60';
+        return `<tr class="hover:bg-slate-800/40">
+          <td class="py-3 px-4"><div class="font-medium text-white">${escapeHTML(lead.company)}</div><div class="text-xs text-slate-400 mt-1">${escapeHTML(lead.contact)}</div></td>
+          <td class="py-3 px-4 text-slate-300">${escapeHTML(lead.source || lead.industry || '—')}</td>
+          <td class="py-3 px-4 text-slate-300">${formatCurrency(lead.budget)}</td>
+          <td class="py-3 px-4 font-semibold text-white">${escapeHTML(lead.score)} / 100</td>
+          <td class="py-3 px-4"><span class="px-2 py-1 rounded-full text-xs ${tierClass}">${escapeHTML(lead.tier)}</span></td>
+          <td class="py-3 px-4 text-slate-300">${escapeHTML(lead.action || 'Follow up')}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function exportCRMToCSV() {
+      const headers = ['Company', 'Contact', 'Industry', 'Channel', 'Budget (USD)', 'Score', 'Tier', 'Next Action'];
+      const rows = leadsCRM.map(lead => [
+        lead.company, lead.contact, lead.industry, lead.source, lead.budget, lead.score, lead.tier, lead.action
+      ]);
+      const csv = [headers, ...rows].map(row => row.map(value => {
+        let cell = String(value ?? '');
+        if (/^[=+\-@]/.test(cell)) cell = "'" + cell;
+        return '"' + cell.replace(/"/g, '""') + '"';
+      }).join(',')).join('\r\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'nexusai-sales-pipeline.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast('CRM exported as CSV.');
+    }
+
+    function toggleApiModal() {
+      const modal = document.getElementById('api-modal');
+      const isOpening = modal.classList.contains('hidden');
+      modal.classList.toggle('hidden', !isOpening);
+      modal.classList.toggle('flex', isOpening);
+      if (isOpening) document.getElementById('gemini-api-key').focus();
+    }
+
+    function updateEngineBadge() {
+      const badge = document.getElementById('engine-badge');
+      const active = Boolean(geminiApiKey);
+      badge.textContent = active ? 'Gemini AI Enabled' : 'Built-In Smart AI';
+      badge.className = 'px-2 py-0.5 text-[10px] font-semibold rounded-full border ' +
+        (active ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30');
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('gemini-api-key').value.trim();
+      if (!key || !key.startsWith('AIza')) {
+        showToast('Enter a valid Gemini API key, or use the built-in engine.', true);
+        return;
+      }
+      geminiApiKey = key;
+      try {
+        sessionStorage.setItem('nexusai-gemini-key', key);
+      } catch (error) {
+        console.error('Could not save the API key for this browser session.', error);
+        showToast('Could not store the key in this browser session.', true);
+        return;
+      }
+      updateEngineBadge();
+      toggleApiModal();
+      showToast('Gemini enabled for this browser session.');
+    }
+
+    function clearApiKey() {
+      geminiApiKey = '';
+      try {
+        sessionStorage.removeItem('nexusai-gemini-key');
+      } catch (error) {
+        console.error('Could not clear the session API key.', error);
+      }
+      document.getElementById('gemini-api-key').value = '';
+      updateEngineBadge();
+      toggleApiModal();
+      showToast('Built-in engine enabled.');
+    }
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !document.getElementById('api-modal').classList.contains('hidden')) {
+        toggleApiModal();
+      }
+      if (event.key === 'Enter' && document.activeElement?.id === 'obj-input') {
+        generateObjectionRebuttal();
+      }
+    });
+
+    document.getElementById('api-modal').addEventListener('click', event => {
+      if (event.target.id === 'api-modal') toggleApiModal();
+    });
+
+    loadCRM();
+    try {
+      geminiApiKey = sessionStorage.getItem('nexusai-gemini-key') || '';
+      if (geminiApiKey) document.getElementById('gemini-api-key').value = geminiApiKey;
+    } catch (error) {
+      console.error('Could not restore the browser-session API key.', error);
+    }
+    updateEngineBadge();
+    updateDashboardKPIs();
+    renderCRMTable();
+    lucide.createIcons();
+  </script>
+</body>
+</html>

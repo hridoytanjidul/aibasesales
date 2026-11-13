@@ -187,6 +187,32 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+st.markdown(
+    """
+    <style>
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+            max-width: 1500px;
+        }
+        @media (max-width: 960px) {
+            .block-container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            div[data-testid="stSidebar"] {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .stButton > button {
+                width: 100%;
+            }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Initialize session state for CRM leads
 if "crm_leads" not in st.session_state:
     st.session_state.crm_leads = load_leads()
