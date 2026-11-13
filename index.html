@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI — Inbound & Outbound Sales Growth Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+    .active-nav {
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.05) 100%);
+      border-left: 3px solid #3b82f6;
+      color: #60a5fa;
+    }
+    .active-mobile-nav {
+      color: #60a5fa;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row pb-20 lg:pb-0">
+
+  <!-- DESKTOP SIDEBAR -->
+  <aside class="hidden lg:flex lg:flex-col lg:w-72 bg-slate-900 border-r border-slate-800 shrink-0 select-none">
+    <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+      <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30">
+        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg tracking-tight text-white">NexusAI Sales</h1>
+        <p class="text-xs text-slate-400">Inbound & Outbound Copilot</p>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-4 space-y-1.5">
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all active-nav">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span>Growth Dashboard</span>
+      </button>
+      <button onclick="switchTab('inbound')" id="nav-inbound" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+        <i data-lucide="inbox" class="w-5 h-5"></i>
+        <span>Inbound AI Qualifier</span>
+      </button>
+      <button onclick="switchTab('outbound')" id="nav-outbound" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+        <i data-lucide="send" class="w-5 h-5"></i>
+        <span>Outbound Pitch Studio</span>
+      </button>
+      <button onclick="switchTab('objections')" id="nav-objections" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+        <i data-lucide="shield-check" class="w-5 h-5"></i>
+        <span>Objection Battlecards</span>
+      </button>
+      <button onclick="switchTab('crm')" id="nav-crm" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span>Lead Pipeline CRM</span>
+      </button>
+    </nav>
+
+    <div class="p-4 m-4 rounded-xl bg-slate-800/70 border border-slate-700/60">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">AI Engine Mode</span>
+        <span id="engine-badge" class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Built-In Smart AI</span>
+      </div>
+      <p class="text-xs text-slate-400 mb-3">Plug in an optional Gemini API Key for live LLM generation.</p>
+      <button onclick="toggleApiModal()" class="w-full py-2 px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-medium text-white transition flex items-center justify-center gap-2">
+        <i data-lucide="key" class="w-3.5 h-3.5"></i>
+        <span>Configure API Key</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="lg:hidden w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
+          <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h2 id="page-title" class="text-lg sm:text-xl font-bold text-white">Growth & Conversion Overview</h2>
+          <p id="page-subtitle" class="text-xs text-slate-400 hidden sm:block">Real-time Inbound & Outbound AI sales intelligence</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button onclick="toggleApiModal()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+          <i data-lucide="key" class="w-4 h-4"></i>
+        </button>
+        <button onclick="switchTab('inbound')" class="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs sm:text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition flex items-center gap-1.5">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Qualify Lead</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT CONTAINER -->
+    <main class="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="space-y-6">
+        <!-- KPI CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="glass-card p-5 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Pipeline Value</span>
+              <div class="p-2 rounded-lg bg-blue-500/10 text-blue-400"><i data-lucide="dollar-sign" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-pipeline" class="text-2xl font-bold text-white mt-3">$48,500</p>
+            <p class="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +28.4% vs last month
+            </p>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Hot Leads (Score 80+)</span>
+              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400"><i data-lucide="flame" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-hot-leads" class="text-2xl font-bold text-white mt-3">3</p>
+            <p class="text-xs text-slate-400 mt-1">Ready for immediate closing</p>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Inbound Response SLA</span>
+              <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><i data-lucide="clock" class="w-5 h-5"></i></div>
+            </div>
+            <p class="text-2xl font-bold text-white mt-3">14 sec</p>
+            <p class="text-xs text-emerald-400 mt-1">3.4x higher conversion velocity</p>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Outbound Reply Rate</span>
+              <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400"><i data-lucide="message-square" class="w-5 h-5"></i></div>
+            </div>
+            <p class="text-2xl font-bold text-white mt-3">34.2%</p>
+            <p class="text-xs text-purple-400 mt-1">AI hyper-personalized sequences</p>
+          </div>
+        </div>
+
+        <!-- INBOUND VS OUTBOUND FUNNEL + QUICK ACTIONS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 glass-card p-6 rounded-2xl space-y-5">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-white">Inbound vs. Outbound Conversion Funnel</h3>
+                <p class="text-xs text-slate-400">AI-assisted qualification and multi-touch follow-up impact</p>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700">Live Metrics</span>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="text-slate-300 font-medium">Inbound Demo & Chat Inquiries (Auto-Qualified)</span>
+                  <span class="text-blue-400 font-semibold">88% Qualified</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="bg-blue-500 h-full rounded-full" style="width: 88%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="text-slate-300 font-medium">Outbound Cold Email & LinkedIn / WhatsApp Sequences</span>
+                  <span class="text-purple-400 font-semibold">64% Engaged</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="bg-purple-500 h-full rounded-full" style="width: 64%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="text-slate-300 font-medium">Objection Overcome Rate (Price / Timing / Competitor)</span>
+                  <span class="text-emerald-400 font-semibold">72% Retained</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-full" style="width: 72%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+              <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                <p class="text-xs text-slate-400">Top Converting Channel</p>
+                <p class="text-sm font-semibold text-white mt-1">Inbound Demo + WhatsApp</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                <p class="text-xs text-slate-400">Primary Customer Pain</p>
+                <p class="text-sm font-semibold text-white mt-1">Slow Lead Follow-up</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                <p class="text-xs text-slate-400">Avg Deal Velocity</p>
+                <p class="text-sm font-semibold text-emerald-400 mt-1">-42% Shorter Cycle</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- WORKFLOW LAUNCHPAD -->
+          <div class="glass-card p-6 rounded-2xl flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="font-semibold text-white">AI Sales Playbooks</h3>
+              <p class="text-xs text-slate-400 mt-1">Launch an automated workflow to capture or close revenue now.</p>
+            </div>
+
+            <div class="space-y-3">
+              <button onclick="switchTab('inbound')" class="w-full p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 flex items-center gap-3 text-left transition">
+                <div class="p-2.5 rounded-lg bg-blue-500/20 text-blue-400"><i data-lucide="inbox" class="w-5 h-5"></i></div>
+                <div>
+                  <p class="text-sm font-medium text-white">Score Inbound Lead</p>
+                  <p class="text-xs text-slate-400">Analyze intent, budget & auto-reply</p>
+                </div>
+              </button>
+
+              <button onclick="switchTab('outbound')" class="w-full p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 flex items-center gap-3 text-left transition">
+                <div class="p-2.5 rounded-lg bg-purple-500/20 text-purple-400"><i data-lucide="send" class="w-5 h-5"></i></div>
+                <div>
+                  <p class="text-sm font-medium text-white">Generate Outbound Campaign</p>
+                  <p class="text-xs text-slate-400">Email, WhatsApp/LinkedIn & Call script</p>
+                </div>
+              </button>
+
+              <button onclick="switchTab('objections')" class="w-full p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 flex items-center gap-3 text-left transition">
+                <div class="p-2.5 rounded-lg bg-emerald-500/20 text-emerald-400"><i data-lucide="shield-check" class="w-5 h-5"></i></div>
+                <div>
+                  <p class="text-sm font-medium text-white">Crush Sales Objections</p>
+                  <p class="text-xs text-slate-400">Real-time psychological rebuttals</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: INBOUND AI QUALIFIER -->
+      <section id="tab-inbound" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- INPUT FORM -->
+          <div class="lg:col-span-5 glass-card p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold text-white flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-5 h-5 text-blue-400"></i>
+                Inbound Lead Intake
+              </h3>
+              <button onclick="fillSampleInbound()" class="text-xs text-blue-400 hover:underline">Load Demo Lead</button>
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Prospect Name & Role</label>
+                <input id="in-name" type="text" placeholder="e.g., Tanvir Ahmed (Head of Operations)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Company Name</label>
+                  <input id="in-company" type="text" placeholder="e.g., Nexus Retail Ltd." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Est. Budget (USD)</label>
+                  <input id="in-budget" type="number" placeholder="e.g., 9500" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Industry</label>
+                  <select id="in-industry" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="E-Commerce & Retail">E-Commerce & Retail</option>
+                    <option value="SaaS & Technology">SaaS & Technology</option>
+                    <option value="FinTech & Banking">FinTech & Banking</option>
+                    <option value="Healthcare & Logistics">Healthcare & Logistics</option>
+                    <option value="Education & EdTech">Education & EdTech</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Inbound Channel</label>
+                  <select id="in-source" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="Website Demo Request">Website Demo Request</option>
+                    <option value="WhatsApp / Live Chat">WhatsApp / Live Chat</option>
+                    <option value="Customer Referral">Customer Referral</option>
+                    <option value="LinkedIn Inbound">LinkedIn Inbound</option>
+                    <option value="Webinar Signup">Webinar Signup</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Customer Inquiry / Message</label>
+                <textarea id="in-message" rows="4" placeholder="Paste the prospect's message, pain points, or requirements here..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500"></textarea>
+              </div>
+
+              <button onclick="analyzeInboundLead()" id="btn-analyze-inbound" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-sm text-white shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
+                <i data-lucide="cpu" class="w-4 h-4"></i>
+                <span>Score Lead & Generate Instant Response</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- OUTPUT REPORT -->
+          <div class="lg:col-span-7 glass-card p-6 rounded-2xl flex flex-col justify-between space-y-5">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-800">
+                <div>
+                  <h3 class="font-semibold text-white">AI Qualification Intelligence</h3>
+                  <p class="text-xs text-slate-400">Automated BANT scoring, sentiment & response draft</p>
+                </div>
+                <span id="inbound-tier-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300">Awaiting Analysis</span>
+              </div>
+
+              <!-- SCORE METRICS -->
+              <div class="grid grid-cols-3 gap-3 my-4">
+                <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                  <p class="text-xs text-slate-400">Lead Score</p>
+                  <p id="inbound-score" class="text-2xl font-bold text-white mt-1">-- / 100</p>
+                </div>
+                <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                  <p class="text-xs text-slate-400">Buyer Sentiment</p>
+                  <p id="inbound-sentiment" class="text-sm font-semibold text-emerald-400 mt-2">--</p>
+                </div>
+                <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                  <p class="text-xs text-slate-400">Urgency Level</p>
+                  <p id="inbound-urgency" class="text-sm font-semibold text-amber-400 mt-2">--</p>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/40 mb-4">
+                <p class="text-xs font-semibold text-blue-300 uppercase tracking-wider">Recommended Closing Playbook</p>
+                <p id="inbound-strategy" class="text-sm text-slate-200 mt-1">Submit a lead on the left to generate a tailored sales strategy and instant reply.</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Instant Personalized Reply</label>
+                  <button onclick="copyText('inbound-reply')" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Reply
+                  </button>
+                </div>
+                <textarea id="inbound-reply" rows="7" class="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-blue-500" readonly placeholder="AI-generated response will appear here..."></textarea>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button onclick="saveCurrentLeadToCRM()" id="btn-save-crm" disabled class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-xs sm:text-sm font-semibold text-white transition flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>Add Qualified Lead to Pipeline CRM</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: OUTBOUND PITCH STUDIO -->
+      <section id="tab-outbound" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 glass-card p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold text-white flex items-center gap-2">
+                <i data-lucide="rocket" class="w-5 h-5 text-purple-400"></i>
+                Outbound Sequence Builder
+              </h3>
+              <button onclick="fillSampleOutbound()" class="text-xs text-purple-400 hover:underline">Load Sample Target</button>
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Target Prospect Name & Title</label>
+                <input id="out-contact" type="text" placeholder="e.g., Sarah Rahman, VP of Sales" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-purple-500" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Target Company</label>
+                  <input id="out-company" type="text" placeholder="e.g., CloudScale BD" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-purple-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Industry</label>
+                  <input id="out-industry" type="text" placeholder="e.g., B2B SaaS / Logistics" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-purple-500" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Prospect's Core Pain Point / Trigger Event</label>
+                <input id="out-pain" type="text" placeholder="e.g., Expanding sales team but losing 40% of leads due to manual follow-ups" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-purple-500" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Your Product / Value Proposition</label>
+                <input id="out-value" type="text" value="AI-powered Inbound & Outbound Sales Automation that lifts conversion by 35% in 60 days" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-purple-500" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Outreach Tone</label>
+                <select id="out-tone" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-purple-500">
+                  <option value="Consultative & ROI-Focused">Consultative & ROI-Focused</option>
+                  <option value="Direct & Executive Brief">Direct & Executive Brief</option>
+                  <option value="Warm & Relationship-First">Warm & Relationship-First</option>
+                </select>
+              </div>
+
+              <button onclick="generateOutboundSequence()" id="btn-generate-outbound" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 font-semibold text-sm text-white shadow-lg shadow-purple-600/25 transition flex items-center justify-center gap-2">
+                <i data-lucide="wand-2" class="w-4 h-4"></i>
+                <span>Generate 3-Touch Outbound Campaign</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 space-y-4">
+            <!-- TOUCH 1: COLD EMAIL -->
+            <div class="glass-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-purple-400">Touch 1 • High-Converting Cold Email</span>
+                <button onclick="copyText('out-email')" class="text-xs text-slate-300 hover:text-white flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                </button>
+              </div>
+              <textarea id="out-email" rows="6" readonly class="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none" placeholder="Click 'Generate 3-Touch Outbound Campaign' to build personalized email..."></textarea>
+            </div>
+
+            <!-- TOUCH 2: LINKEDIN / WHATSAPP DM -->
+            <div class="glass-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-400">Touch 2 • LinkedIn / WhatsApp Direct Message</span>
+                <button onclick="copyText('out-dm')" class="text-xs text-slate-300 hover:text-white flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                </button>
+              </div>
+              <textarea id="out-dm" rows="4" readonly class="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none" placeholder="Short, mobile-friendly message for WhatsApp or LinkedIn..."></textarea>
+            </div>
+
+            <!-- TOUCH 3: COLD CALL OPENER -->
+            <div class="glass-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Touch 3 • 30-Second Phone Call Opener</span>
+                <button onclick="copyText('out-call')" class="text-xs text-slate-300 hover:text-white flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                </button>
+              </div>
+              <textarea id="out-call" rows="4" readonly class="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none" placeholder="Pattern-interrupt cold call script..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: OBJECTION BATTLECARDS -->
+      <section id="tab-objections" class="hidden space-y-6">
+        <div class="glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="font-semibold text-white">Real-Time Objection Rebuttal Coach</h3>
+              <p class="text-xs text-slate-400">Select a common pushback or type a custom customer objection to get instant closing frameworks.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="loadObjectionPreset('price')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700">💰 "Too Expensive"</button>
+              <button onclick="loadObjectionPreset('timing')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700">⏳ "Call Me Next Quarter"</button>
+              <button onclick="loadObjectionPreset('competitor')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700">⚔️ "Using a Competitor"</button>
+              <button onclick="loadObjectionPreset('authority')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700">👥 "Need Boss Approval"</button>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input id="obj-input" type="text" placeholder="Type what the customer said (e.g., 'Your price is 20% higher than what we budgeted')..." class="flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-emerald-500" />
+            <button onclick="generateObjectionRebuttal()" id="btn-objection" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm text-white shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2 shrink-0">
+              <i data-lucide="shield" class="w-4 h-4"></i>
+              <span>Generate Battlecard</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-3">
+            <div>
+              <span class="px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-semibold">1. Empathetic Pivot</span>
+              <p id="obj-card-1" class="text-sm text-slate-200 mt-3 leading-relaxed">Select a preset above or enter a custom objection to generate an empathetic, trust-building response.</p>
+            </div>
+            <button onclick="copyTextFromElement('obj-card-1')" class="text-xs text-blue-400 hover:underline self-start flex items-center gap-1">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Script
+            </button>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-3">
+            <div>
+              <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-semibold">2. ROI & Math Framing</span>
+              <p id="obj-card-2" class="text-sm text-slate-200 mt-3 leading-relaxed">Quantifies the cost of inaction and reframes the price around net revenue gained within 45–60 days.</p>
+            </div>
+            <button onclick="copyTextFromElement('obj-card-2')" class="text-xs text-emerald-400 hover:underline self-start flex items-center gap-1">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Script
+            </button>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-3">
+            <div>
+              <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 text-xs font-semibold">3. Risk-Reversal Close</span>
+              <p id="obj-card-3" class="text-sm text-slate-200 mt-3 leading-relaxed">Proposes a low-friction pilot or milestone guarantee so the decision-maker can say yes today.</p>
+            </div>
+            <button onclick="copyTextFromElement('obj-card-3')" class="text-xs text-amber-400 hover:underline self-start flex items-center gap-1">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Script
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: LEAD PIPELINE CRM -->
+      <section id="tab-crm" class="hidden space-y-6">
+        <div class="glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-semibold text-white">Qualified Sales Pipeline</h3>
+              <p class="text-xs text-slate-400">Prioritized Inbound & Outbound prospects ranked by AI Conversion Score</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <select id="crm-filter" onchange="renderCRMTable()" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none">
+                <option value="ALL">All Tiers</option>
+                <option value="Hot">Hot Leads Only</option>
+                <option value="Warm">Warm Leads Only</option>
+                <option value="Cold">Cold Leads Only</option>
+              </select>
+              <button onclick="exportCRMToCSV()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-white border border-slate-700 flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th class="py-3 px-4">Company & Contact</th>
+                  <th class="py-3 px-4">Channel</th>
+                  <th class="py-3 px-4">Budget</th>
+                  <th class="py-3 px-4">Score</th>
+                  <th class="py-3 px-4">Tier</th>
+                  <th class="py-3 px-4">Recommended Next Action</th>
+                </tr>
+              </thead>
+              <tbody id="crm-table-body" class="divide-y divide-slate-800/70 text-sm">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-5 py-2 px-1">
+    <button onclick="switchTab('dashboard')" id="mnav-dashboard" class="flex flex-col items-center justify-center py-1 text-slate-400 active-mobile-nav">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">Overview</span>
+    </button>
+    <button onclick="switchTab('inbound')" id="mnav-inbound" class="flex flex-col items-center justify-center py-1 text-slate-400">
+      <i data-lucide="inbox" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">Inbound</span>
+    </button>
+    <button onclick="switchTab('outbound')" id="mnav-outbound" class="flex flex-col items-center justify-center py-1 text-slate-400">
+      <i data-lucide="send" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">Outbound</span>
+    </button>
+    <button onclick="switchTab('objections')" id="mnav-objections" class="flex flex-col items-center justify-center py-1 text-slate-400">
+      <i data-lucide="shield-check" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">Objections</span>
+    </button>
+    <button onclick="switchTab('crm')" id="mnav-crm" class="flex flex-col items-center justify-center py-1 text-slate-400">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">CRM</span>
+    </button>
+  </nav>
+
+  <!-- API KEY MODAL -->
+  <div id="api-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full p-6 rounded-2xl space-y-4 border border-slate-700">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-white flex items-center gap-2">
+          <i data-lucide="key" class="w-5 h-5 text-blue-400"></i>
+          Configure Gemini API Key (Optional)
+        </h3>
+        <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        This app works out-of-the-box using its built-in Sales Intelligence Engine. To enable live generative responses powered by <strong>Gemini 2.5 Flash</strong>, paste your API key below:
+      </p>
+      <input id="gemini-api-key" type="password" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-blue-500" />
+      <div class="flex justify-end gap-2">
+        <button onclick="clearApiKey()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300">Use Built-in Engine</button>
+        <button onclick="saveApiKey()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">Save Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="hidden fixed bottom-20 lg:bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-medium shadow-xl flex items-center gap-2">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg">Copied to clipboard!</span>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // State Management
+    let geminiApiKey = "";
+    let lastAnalyzedLead = null;
+
+    let leadsCRM = [
+      {
+        company: "Nexus Retail Ltd.",
+        contact: "Tanvir Ahmed",
+        industry: "E-Commerce & Retail",
+        source: "Website Demo Request",
+        budget: 12000,
+        score: 92,
+        tier: "Hot",
+        action: "Schedule executive ROI demo within 2 hours"
+      },
+      {
+        company: "FinEdge Payments",
+        contact: "Nadia Islam",
+        industry: "FinTech & Banking",
+        source: "Customer Referral",
+        budget: 18500,
+        score: 95,
+        tier: "Hot",
+        action: "Send custom enterprise security & conversion deck"
+      },
+      {
+        company: "Metro Logistics BD",
+        contact: "Rafiqul Hasan",
+        industry: "Healthcare & Logistics",
+        source: "WhatsApp / Live Chat",
+        budget: 8500,
+        score: 84,
+        tier: "Hot",
+        action: "Share WhatsApp automation workflow + 14-day pilot"
+      },
+      {
+        company: "EdVantage Academy",
+        contact: "Farhan Kabir",
+        industry: "Education & EdTech",
+        source: "LinkedIn Inbound",
+        budget: 4500,
+        score: 68,
+        tier: "Warm",
+        action: "Enroll in 3-step case study nurture sequence"
+      },
+      {
+        company: "BrightWave Studio",
+        contact: "Sadia Chowdhury",
+        industry: "SaaS & Technology",
+        source: "Webinar Signup",
+        budget: 2000,
+        score: 42,
+        tier: "Cold",
+        action: "Add to automated monthly product newsletter"
+      }
+    ];
+
+    // Navigation Switcher
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'inbound', 'outbound', 'objections', 'crm'];
+      const titles = {
+        dashboard: ['Growth & Conversion Overview', 'Real-time Inbound & Outbound AI sales intelligence'],
+        inbound: ['Inbound AI Lead Qualifier', 'Instant BANT scoring, buyer sentiment analysis & automated reply'],
+        outbound: ['Outbound Multi-Touch Pitch Studio', 'Generate hyper-personalized Email, WhatsApp/LinkedIn & Call scripts'],
+        objections: ['AI Objection Battlecards', 'Turn price, timing, and competitor pushbacks into closed deals'],
+        crm: ['Sales Pipeline CRM', 'Track, filter, and export qualified opportunities']
+      };
+
+      tabs.forEach(t => {
+        document.getElementById('tab-' + t).classList.add('hidden');
+        const dNav = document.getElementById('nav-' + t);
+        if (dNav) {
+          dNav.classList.remove('active-nav');
+          dNav.classList.add('text-slate-400');
+        }
+        const mNav = document.getElementById('mnav-' + t);
+        if (mNav) {
+          mNav.classList.remove('active-mobile-nav');
+        }
+      });
+
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      const activeDesktop = document.getElementById('nav-' + tabId);
+      if (activeDesktop) {
+        activeDesktop.classList.add('active-nav');
+        activeDesktop.classList.remove('text-slate-400');
+      }
+      const activeMobile = document.getElementById('mnav-' + tabId);
+      if (activeMobile) {
+        activeMobile.classList.add('active-mobile-nav');
+      }
+
+      document.getElementById('page-title').textContent = titles[tabId][0];
+      document.getElementById('page-subtitle').textContent = titles[tabId][1];
+
+      if (tabId === 'crm') renderCRMTable();
+      updateDashboardKPIs();
+    }
+
+    function updateDashboardKPIs() {
+      const totalValue = leadsCRM.reduce((acc, item) => acc + Number(item.budget || 0), 0);
+      const hotCount = leadsCRM.filter(l => l.tier === 'Hot').length;
+      document.

@@ -45,8 +45,9 @@ This app is structured for standard Streamlit deployment patterns and includes:
 - `requirements.txt`
 - `Procfile`
 - `.streamlit/config.toml`
+- `Dockerfile` for container-based hosting such as Vercel or other Docker-compatible platforms
 
-It is ready for deployment to Streamlit Community Cloud or similar hosts.
+It is ready for deployment to Streamlit Community Cloud, Docker-compatible hosts, and Vercel using the container approach.
 
 ## Notes
 
