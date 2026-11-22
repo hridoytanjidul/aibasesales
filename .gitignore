@@ -5,3 +5,4 @@ __pycache__/
 .streamlit/secrets.toml
 sales_pipeline.db
 sales_pipeline.json
+.pytest_cache/

@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NexusAI — Inbound & Outbound Sales Growth Agent</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Pinned versions: this page holds the user's Gemini key, so third-party scripts must not change underneath it.
+       The Tailwind CDN sends no CORS header, so it can be pinned but not integrity-checked. -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@1.77.0/dist/umd/lucide.min.js" integrity="sha384-fwFZu/W4jQGjDm7nioPLVWVdT/j9eDRcHN7Otg9U/hRD60LEhWduz/qvBAT1A/Q2" crossorigin="anonymous"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     body {
@@ -120,10 +122,8 @@
               <span class="text-xs font-medium text-slate-400">Pipeline Value</span>
               <div class="p-2 rounded-lg bg-blue-500/10 text-blue-400"><i data-lucide="dollar-sign" class="w-5 h-5"></i></div>
             </div>
-            <p id="kpi-pipeline" class="text-2xl font-bold text-white mt-3">$48,500</p>
-            <p class="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-              <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +28.4% vs last month
-            </p>
+            <p id="kpi-pipeline" class="text-2xl font-bold text-white mt-3">$0</p>
+            <p id="kpi-lead-count" class="text-xs text-slate-400 mt-1">0 leads in the CRM</p>
           </div>
 
           <div class="glass-card p-5 rounded-2xl">
@@ -131,26 +131,26 @@
               <span class="text-xs font-medium text-slate-400">Hot Leads (Score 80+)</span>
               <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400"><i data-lucide="flame" class="w-5 h-5"></i></div>
             </div>
-            <p id="kpi-hot-leads" class="text-2xl font-bold text-white mt-3">3</p>
+            <p id="kpi-hot-leads" class="text-2xl font-bold text-white mt-3">0</p>
             <p class="text-xs text-slate-400 mt-1">Ready for immediate closing</p>
           </div>
 
           <div class="glass-card p-5 rounded-2xl">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-medium text-slate-400">Inbound Response SLA</span>
-              <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><i data-lucide="clock" class="w-5 h-5"></i></div>
+              <span class="text-xs font-medium text-slate-400">Average Lead Score</span>
+              <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><i data-lucide="target" class="w-5 h-5"></i></div>
             </div>
-            <p class="text-2xl font-bold text-white mt-3">14 sec</p>
-            <p class="text-xs text-emerald-400 mt-1">3.4x higher conversion velocity</p>
+            <p id="kpi-avg-score" class="text-2xl font-bold text-white mt-3">—</p>
+            <p class="text-xs text-slate-400 mt-1">Across all CRM leads</p>
           </div>
 
           <div class="glass-card p-5 rounded-2xl">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-medium text-slate-400">Outbound Reply Rate</span>
-              <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400"><i data-lucide="message-square" class="w-5 h-5"></i></div>
+              <span class="text-xs font-medium text-slate-400">Average Deal Size</span>
+              <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400"><i data-lucide="briefcase" class="w-5 h-5"></i></div>
             </div>
-            <p class="text-2xl font-bold text-white mt-3">34.2%</p>
-            <p class="text-xs text-purple-400 mt-1">AI hyper-personalized sequences</p>
+            <p id="kpi-avg-deal" class="text-2xl font-bold text-white mt-3">—</p>
+            <p class="text-xs text-slate-400 mt-1">Mean budget per lead</p>
           </div>
         </div>
 
@@ -159,56 +159,56 @@
           <div class="lg:col-span-2 glass-card p-6 rounded-2xl space-y-5">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="font-semibold text-white">Inbound vs. Outbound Conversion Funnel</h3>
-                <p class="text-xs text-slate-400">AI-assisted qualification and multi-touch follow-up impact</p>
+                <h3 class="font-semibold text-white">Pipeline Mix by Tier</h3>
+                <p class="text-xs text-slate-400">Share of CRM leads in each priority tier</p>
               </div>
-              <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700">Live Metrics</span>
+              <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700">From your CRM</span>
             </div>
 
             <div class="space-y-4">
               <div>
                 <div class="flex justify-between text-xs mb-1.5">
-                  <span class="text-slate-300 font-medium">Inbound Demo & Chat Inquiries (Auto-Qualified)</span>
-                  <span class="text-blue-400 font-semibold">88% Qualified</span>
+                  <span class="text-slate-300 font-medium">Hot leads (score 80+)</span>
+                  <span id="bar-hot-label" class="text-red-300 font-semibold">—</span>
                 </div>
                 <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div class="bg-blue-500 h-full rounded-full" style="width: 88%"></div>
+                  <div id="bar-hot" class="bg-red-400 h-full rounded-full" style="width: 0%"></div>
                 </div>
               </div>
 
               <div>
                 <div class="flex justify-between text-xs mb-1.5">
-                  <span class="text-slate-300 font-medium">Outbound Cold Email & LinkedIn / WhatsApp Sequences</span>
-                  <span class="text-purple-400 font-semibold">64% Engaged</span>
+                  <span class="text-slate-300 font-medium">Warm leads (score 55–79)</span>
+                  <span id="bar-warm-label" class="text-amber-300 font-semibold">—</span>
                 </div>
                 <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div class="bg-purple-500 h-full rounded-full" style="width: 64%"></div>
+                  <div id="bar-warm" class="bg-amber-400 h-full rounded-full" style="width: 0%"></div>
                 </div>
               </div>
 
               <div>
                 <div class="flex justify-between text-xs mb-1.5">
-                  <span class="text-slate-300 font-medium">Objection Overcome Rate (Price / Timing / Competitor)</span>
-                  <span class="text-emerald-400 font-semibold">72% Retained</span>
+                  <span class="text-slate-300 font-medium">Cold leads (score below 55)</span>
+                  <span id="bar-cold-label" class="text-slate-300 font-semibold">—</span>
                 </div>
                 <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div class="bg-emerald-500 h-full rounded-full" style="width: 72%"></div>
+                  <div id="bar-cold" class="bg-slate-400 h-full rounded-full" style="width: 0%"></div>
                 </div>
               </div>
             </div>
 
             <div class="pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
               <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-                <p class="text-xs text-slate-400">Top Converting Channel</p>
-                <p class="text-sm font-semibold text-white mt-1">Inbound Demo + WhatsApp</p>
+                <p class="text-xs text-slate-400">Top Channel by Value</p>
+                <p id="stat-top-channel" class="text-sm font-semibold text-white mt-1">—</p>
               </div>
               <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-                <p class="text-xs text-slate-400">Primary Customer Pain</p>
-                <p class="text-sm font-semibold text-white mt-1">Slow Lead Follow-up</p>
+                <p class="text-xs text-slate-400">Top Industry by Value</p>
+                <p id="stat-top-industry" class="text-sm font-semibold text-white mt-1">—</p>
               </div>
               <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-                <p class="text-xs text-slate-400">Avg Deal Velocity</p>
-                <p class="text-sm font-semibold text-emerald-400 mt-1">-42% Shorter Cycle</p>
+                <p class="text-xs text-slate-400">Largest Opportunity</p>
+                <p id="stat-largest" class="text-sm font-semibold text-emerald-400 mt-1">—</p>
               </div>
             </div>
           </div>
@@ -549,6 +549,7 @@
                   <th class="py-3 px-4">Score</th>
                   <th class="py-3 px-4">Tier</th>
                   <th class="py-3 px-4">Recommended Next Action</th>
+                  <th class="py-3 px-4"><span class="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody id="crm-table-body" class="divide-y divide-slate-800/70 text-sm">
@@ -675,11 +676,57 @@
       }
     ];
 
+    function setText(elementId, text) {
+      document.getElementById(elementId).textContent = text;
+    }
+
+    function pluralLeads(count) {
+      return count === 1 ? '1 lead' : count + ' leads';
+    }
+
+    // Returns the key with the largest summed value, e.g. the channel with the most pipeline value.
+    function topBy(items, keyOf, valueOf) {
+      const totals = new Map();
+      items.forEach(item => {
+        const key = keyOf(item);
+        if (key) totals.set(key, (totals.get(key) || 0) + valueOf(item));
+      });
+      let best = null;
+      totals.forEach((total, key) => {
+        if (!best || total > best.total) best = { key, total };
+      });
+      return best;
+    }
+
     function updateDashboardKPIs() {
-      const totalValue = leadsCRM.reduce((acc, item) => acc + Number(item.budget || 0), 0);
-      const hotCount = leadsCRM.filter(l => l.tier === 'Hot').length;
-      document.getElementById('kpi-pipeline').textContent = formatCurrency(totalValue);
-      document.getElementById('kpi-hot-leads').textContent = String(hotCount);
+      const count = leadsCRM.length;
+      const totalValue = leadsCRM.reduce((acc, lead) => acc + Number(lead.budget || 0), 0);
+      const totalScore = leadsCRM.reduce((acc, lead) => acc + Number(lead.score || 0), 0);
+      const tierCounts = { Hot: 0, Warm: 0, Cold: 0 };
+      leadsCRM.forEach(lead => {
+        if (lead.tier in tierCounts) tierCounts[lead.tier] += 1;
+      });
+
+      setText('kpi-pipeline', formatCurrency(totalValue));
+      setText('kpi-lead-count', pluralLeads(count) + ' in the CRM');
+      setText('kpi-hot-leads', String(tierCounts.Hot));
+      setText('kpi-avg-score', count ? Math.round(totalScore / count) + ' / 100' : '—');
+      setText('kpi-avg-deal', count ? formatCurrency(totalValue / count) : '—');
+
+      Object.entries(tierCounts).forEach(([tier, tierCount]) => {
+        const id = 'bar-' + tier.toLowerCase();
+        const percent = count ? Math.round(tierCount / count * 100) : 0;
+        document.getElementById(id).style.width = percent + '%';
+        setText(id + '-label', percent + '% · ' + pluralLeads(tierCount));
+      });
+
+      const topChannel = topBy(leadsCRM, lead => lead.source, lead => Number(lead.budget || 0));
+      const topIndustry = topBy(leadsCRM, lead => lead.industry, lead => Number(lead.budget || 0));
+      const largest = leadsCRM.reduce((best, lead) =>
+        !best || Number(lead.budget || 0) > Number(best.budget || 0) ? lead : best, null);
+      setText('stat-top-channel', topChannel ? topChannel.key : '—');
+      setText('stat-top-industry', topIndustry ? topIndustry.key : '—');
+      setText('stat-largest', largest ? largest.company + ' · ' + formatCurrency(largest.budget) : '—');
     }
 
     function formatCurrency(value) {
@@ -801,13 +848,28 @@
       return score >= 80 ? 'Hot' : score >= 55 ? 'Warm' : 'Cold';
     }
 
+    // Keep the scoring rules identical to score_lead() in app.py.
+    const SCORING_KEYWORDS = ['conversion', 'urgent', 'automate', 'automation', 'scale', 'demo', 'budget', 'sales', 'today', 'respond'];
+    const HIGH_INTENT_SOURCES = ['Website Demo Request', 'Customer Referral', 'WhatsApp / Live Chat'];
+
+    function scoreLead(budget, source, message) {
+      const text = message.toLowerCase();
+      const keywordScore = Math.min(SCORING_KEYWORDS.filter(word => text.includes(word)).length * 5, 25);
+      const budgetScore = budget >= 10000 ? 35 : budget >= 5000 ? 25 : budget >= 1000 ? 15 : 8;
+      const sourceScore = HIGH_INTENT_SOURCES.includes(source) ? 15 : 8;
+      return Math.min(99, 25 + budgetScore + keywordScore + sourceScore);
+    }
+
+    const GEMINI_MODEL = 'gemini-3.8-flash';
+
     async function generateGeminiText(prompt) {
       if (!geminiApiKey) return null;
+      // The key goes in a header rather than the URL so it stays out of logs and browser history.
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(geminiApiKey),
+        'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.6, maxOutputTokens: 900 }
@@ -827,11 +889,12 @@
     async function analyzeInboundLead() {
       const name = document.getElementById('in-name').value.trim();
       const company = document.getElementById('in-company').value.trim();
-      const budget = Number(document.getElementById('in-budget').value);
+      const budgetText = document.getElementById('in-budget').value.trim();
+      const budget = Number(budgetText);
       const industry = document.getElementById('in-industry').value;
       const source = document.getElementById('in-source').value;
       const message = document.getElementById('in-message').value.trim();
-      if (!name || !company || !message || !Number.isFinite(budget) || budget < 0) {
+      if (!name || !company || !message || budgetText === '' || !Number.isFinite(budget) || budget < 0) {
         showToast('Enter a name, company, valid budget, and inquiry first.', true);
         return;
       }
@@ -839,11 +902,7 @@
       const button = document.getElementById('btn-analyze-inbound');
       button.disabled = true;
       try {
-        const keywords = ['conversion', 'urgent', 'automate', 'automation', 'scale', 'demo', 'budget', 'sales', 'today', 'respond'];
-        const keywordScore = Math.min(keywords.filter(word => message.toLowerCase().includes(word)).length * 5, 25);
-        const budgetScore = budget >= 10000 ? 35 : budget >= 5000 ? 25 : budget >= 1000 ? 15 : 8;
-        const sourceScore = ['Website Demo Request', 'Customer Referral', 'WhatsApp / Live Chat'].includes(source) ? 15 : 8;
-        const score = Math.min(99, 25 + budgetScore + keywordScore + sourceScore);
+        const score = scoreLead(budget, source, message);
         const tier = getTier(score);
         const urgency = /urgent|asap|immediately|today|this week/i.test(message) ? 'High' :
           /month|quarter|later|exploring/i.test(message) ? 'Low' : 'Medium';
@@ -1055,12 +1114,14 @@
     function renderCRMTable() {
       const body = document.getElementById('crm-table-body');
       const filter = document.getElementById('crm-filter').value;
-      const visibleLeads = leadsCRM.filter(lead => filter === 'ALL' || lead.tier === filter);
+      const visibleLeads = leadsCRM
+        .map((lead, index) => ({ lead, index }))
+        .filter(({ lead }) => filter === 'ALL' || lead.tier === filter);
       if (!visibleLeads.length) {
-        body.innerHTML = '<tr><td colspan="6" class="py-8 px-4 text-center text-slate-400">No leads match this filter.</td></tr>';
+        body.innerHTML = '<tr><td colspan="7" class="py-8 px-4 text-center text-slate-400">No leads match this filter.</td></tr>';
         return;
       }
-      body.innerHTML = visibleLeads.map(lead => {
+      body.innerHTML = visibleLeads.map(({ lead, index }) => {
         const tierClass = lead.tier === 'Hot' ? 'text-red-300 bg-red-500/10' :
           lead.tier === 'Warm' ? 'text-amber-300 bg-amber-500/10' : 'text-slate-300 bg-slate-700/60';
         return `<tr class="hover:bg-slate-800/40">
@@ -1070,8 +1131,27 @@
           <td class="py-3 px-4 font-semibold text-white">${escapeHTML(lead.score)} / 100</td>
           <td class="py-3 px-4"><span class="px-2 py-1 rounded-full text-xs ${tierClass}">${escapeHTML(lead.tier)}</span></td>
           <td class="py-3 px-4 text-slate-300">${escapeHTML(lead.action || 'Follow up')}</td>
+          <td class="py-3 px-4 text-right">
+            <button type="button" data-delete-index="${index}" aria-label="Remove ${escapeHTML(lead.company)}" title="Remove lead" class="p-1.5 rounded-lg text-slate-400 hover:text-red-300 hover:bg-red-500/10">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </td>
         </tr>`;
       }).join('');
+      lucide.createIcons();
+    }
+
+    function deleteLead(index) {
+      const lead = leadsCRM[index];
+      if (!lead || !window.confirm('Remove ' + lead.company + ' (' + lead.contact + ') from the CRM?')) return;
+      leadsCRM.splice(index, 1);
+      if (!persistCRM()) {
+        leadsCRM.splice(index, 0, lead);
+        return;
+      }
+      updateDashboardKPIs();
+      renderCRMTable();
+      showToast(lead.company + ' removed from the CRM.');
     }
 
     function exportCRMToCSV() {
@@ -1081,7 +1161,7 @@
       ]);
       const csv = [headers, ...rows].map(row => row.map(value => {
         let cell = String(value ?? '');
-        if (/^[=+\-@]/.test(cell)) cell = "'" + cell;
+        if (/^[=+\-@\t\r]/.test(cell)) cell = "'" + cell;
         return '"' + cell.replace(/"/g, '""') + '"';
       }).join(',')).join('\r\n');
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
@@ -1155,6 +1235,11 @@
 
     document.getElementById('api-modal').addEventListener('click', event => {
       if (event.target.id === 'api-modal') toggleApiModal();
+    });
+
+    document.getElementById('crm-table-body').addEventListener('click', event => {
+      const button = event.target.closest('[data-delete-index]');
+      if (button) deleteLead(Number(button.dataset.deleteIndex));
     });
 
     loadCRM();
